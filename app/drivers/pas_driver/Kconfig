@@ -1,0 +1,5 @@
+menuconfig PAS_DRIVER
+    bool "On-board led sensor driver"
+    default y
+    help
+        Enable the custom driver for on-board led sensor driver
