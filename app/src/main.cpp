@@ -9,7 +9,6 @@ int main(void)
 {
     const struct device *dev = DEVICE_DT_GET_ANY(pas_driver);
     struct sensor_value val;
-    bool counting = true;
 
     if (!device_is_ready(dev)) {
         return -ENODEV;
@@ -23,13 +22,7 @@ int main(void)
         (void)sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP, &val); /* LED off */
         k_msleep(CONFIG_APP_HEARTBEAT_PERIOD_MS);
 
-        LOG_INF("toggle count: %d (%s)", val.val1, counting ? "counting" : "frozen");
-
-        /* after 10 toggles, stop counting */
-        if (counting && val.val1 >= 10) {
-            pas_enable_toggle_counter(dev, false);
-            counting = false;
-        }
+        LOG_INF("toggle count: %d (%s)", val.val1, val.val2 ? "counting" : "frozen");
     }
 
     return 0;

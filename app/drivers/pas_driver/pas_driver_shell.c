@@ -1,5 +1,6 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/drivers/sensor.h>
+#include "pas_driver.h"
 
 static int cmd_sample_fetch_handler(const struct shell *sh, size_t argc, char **argv)
 {
@@ -62,10 +63,44 @@ static int cmd_info_handler(const struct shell *sh, size_t argc, char **argv)
     return 0;
 }
 
+static int cmd_toggle_counter_handler(const struct shell *sh, size_t argc, char **argv)
+{
+    int value;
+    int ret = sscanf(argv[1], "%d", &value);
+
+    if (ret != 1 || (value != 0 && value != 1)) {
+        shell_error(sh, "Invalid argument '%s'. Expected 0 (disable) or 1 (enable).", argv[1]);
+        return -EINVAL;
+    }
+
+    const char *name = "pas_driver0";
+    const struct device *dev = shell_device_get_binding(name);
+
+    if (dev == NULL) {
+        shell_error(sh, "Device %s not found!", name);
+        return -ENODEV;
+    }
+
+    if (!device_is_ready(dev)) {
+        shell_error(sh, "%s is not ready!", name);
+        return -ENODEV;
+    }
+
+    ret = pas_enable_toggle_counter(dev, (bool)value);
+
+    if (ret != 0) {
+        shell_error(sh, "Could not toggle counter, %d", ret);
+        return ret;
+    }
+
+    return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(pas_driver_subcmd,
                                [0]=SHELL_CMD_ARG(fetch, NULL, "Calls sensor_sample_fetch().", cmd_sample_fetch_handler, 2, 0),
                                [1]=SHELL_CMD_ARG(read, NULL, "Calls sensor_channel_get().", cmd_channel_get_handler, 2, 0),
                                [2]=SHELL_CMD_ARG(info, NULL, "Prints the device name and ready state.", cmd_info_handler, 1, 0),
-                               [3]=SHELL_SUBCMD_SET_END);
+                               [3]=SHELL_CMD_ARG(set, NULL, "Calls extension API, 0 - disables toggle counter, 1 - enables toggle counter.", cmd_toggle_counter_handler, 2, 0),
+                               [4]=SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(sensor, &pas_driver_subcmd, "pas driver set of commands", NULL);

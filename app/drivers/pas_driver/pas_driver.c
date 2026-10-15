@@ -63,7 +63,7 @@ static int channel_get_my_impl(const struct device *dev,
     }
 
     val->val1 = (int32_t)data->toggle_count;
-    val->val2 = 0;
+    val->val2 = data->counter_enabled;
 
     return 0;
 }
